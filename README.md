@@ -21,7 +21,13 @@ mmcv-ful = 1.5.3
 mmdetection = 2.25.1
 ```
 
-- [Datasets](docs/datasets.md) 
+- [Datasets](docs/datasets.md)
+
+## Documentation
+
+- **[Occupancy Head Architecture](docs/occupancy_head_architecture.md)**: 详细讲解 Occupancy 预测头和 3D Encoder 的结构、数据流和 Loss 计算
+- **[Architecture Diagram](docs/architecture_diagram.md)**: 完整的架构图说明，包含所有张量维度信息
+- **[Architecture Diagram (Draw.io)](docs/occupancy_head_structure.drawio)**: 交互式架构图，可在 [draw.io](https://app.diagrams.net/) 中打开 
 
 ```
 FusionOcc

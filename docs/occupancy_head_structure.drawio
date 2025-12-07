@@ -1,0 +1,143 @@
+<mxfile host="app.diagrams.net" modified="2024-01-01T00:00:00.000Z" agent="5.0" version="21.0.0" etag="drawio" type="device">
+  <diagram name="Occupancy Head Architecture" id="architecture">
+    <mxGraphModel dx="1422" dy="794" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="3300" pageHeight="2339" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        
+        <mxCell id="title" value="FusionOcc: Occupancy Prediction Head &amp; 3D Encoder Architecture" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=24;fontStyle=1;fontColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="650" y="40" width="2000" height="40" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="img-feat" value="Image 3D Features&#xa;[B, 32, D, H, W]&#xa;D=128, H=W=1600" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFE680;strokeColor=#B8860B;strokeWidth=3;fontSize=13;align=left;verticalAlign=top;spacingLeft=10;spacingTop=5;fontColor=#000000;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="100" y="150" width="250" height="80" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="lidar-feat" value="LiDAR Features&#xa;[B, 32, D, H, W]&#xa;D=128, H=W=1600" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#80D4FF;strokeColor=#0066CC;strokeWidth=3;fontSize=13;align=left;verticalAlign=top;spacingLeft=10;spacingTop=5;fontColor=#000000;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="100" y="280" width="250" height="80" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="concat-op" value="Concatenate&#xa;(dim=1)&#xa;torch.cat" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#333333;strokeWidth=3;fontSize=13;fontStyle=1;fontColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="420" y="215" width="120" height="60" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="fusion-feat" value="3D Fused Features&#xa;[B, 64, D, H, W]&#xa;64 = 32(img) + 32(lidar)&#xa;⚠️ Simple Concatenation&#xa;No learned fusion" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFB3FF;strokeColor=#CC00CC;strokeWidth=3;fontSize=12;align=left;verticalAlign=top;spacingLeft=10;spacingTop=5;fontColor=#000000;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="620" y="200" width="300" height="90" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="encoder-title" value="3D Encoder (occ_encoder)" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=18;fontStyle=1;fontColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="1020" y="170" width="300" height="30" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="encoder-backbone" value="Backbone: CustomResNet3D" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#80FF80;strokeColor=#008000;strokeWidth=3;fontSize=13;fontStyle=1;align=center;verticalAlign=top;spacingTop=5;fontColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="1020" y="220" width="280" height="30" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="stage0" value="Stage 0: BasicBlock3D×1&#xa;stride=1&#xa;Output: [B, 64, 128, 1600, 1600]" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#B3FFB3;strokeColor=#006600;strokeWidth=2;fontSize=11;align=left;verticalAlign=top;spacingLeft=5;spacingTop=5;fontColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="1040" y="270" width="240" height="60" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="stage1" value="Stage 1: BasicBlock3D×2&#xa;stride=2&#xa;Output: [B, 128, 64, 800, 800]" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#B3FFB3;strokeColor=#006600;strokeWidth=2;fontSize=11;align=left;verticalAlign=top;spacingLeft=5;spacingTop=5;fontColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="1040" y="350" width="240" height="60" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="stage2" value="Stage 2: BasicBlock3D×3&#xa;stride=2&#xa;Output: [B, 256, 32, 400, 400]" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#B3FFB3;strokeColor=#006600;strokeWidth=2;fontSize=11;align=left;verticalAlign=top;spacingLeft=5;spacingTop=5;fontColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="1040" y="430" width="240" height="60" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="encoder-neck" value="Neck: LSSFPN3D" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFCC80;strokeColor=#CC6600;strokeWidth=3;fontSize=13;fontStyle=1;align=center;verticalAlign=top;spacingTop=5;fontColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="1020" y="510" width="280" height="30" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="fpn-ops" value="1. x_16: Trilinear Upsample ×2&#xa;   [B, 128, 64, 800, 800] → [B, 128, 128, 1600, 1600]&#xa;2. x_32: Trilinear Upsample ×4&#xa;   [B, 256, 32, 400, 400] → [B, 256, 128, 1600, 1600]&#xa;3. Concat: [B, 448, 128, 1600, 1600]&#xa;4. Conv3d(1×1×1): [B, 64, 128, 1600, 1600]" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFE0B3;strokeColor=#CC6600;strokeWidth=2;fontSize=11;align=left;verticalAlign=top;spacingLeft=5;spacingTop=5;fontColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="1040" y="560" width="240" height="100" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="encoded-feat" value="Encoded Features&#xa;[B, 64, 128, 1600, 1600]" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FF8080;strokeColor=#CC0000;strokeWidth=3;fontSize=12;align=center;verticalAlign=middle;fontColor=#FFFFFF;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="1340" y="290" width="200" height="50" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="head-title" value="Occupancy Prediction Head" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=18;fontStyle=1;fontColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="1620" y="170" width="300" height="30" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="final-conv" value="Final Conv&#xa;Conv3d(64→64, kernel=3)&#xa;[B, 64, 128, 1600, 1600]" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFE680;strokeColor=#B8860B;strokeWidth=3;fontSize=12;align=center;verticalAlign=middle;fontColor=#000000;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="1620" y="220" width="280" height="60" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="permute-op" value="Permute&#xa;(0,4,3,2,1)&#xa;BCDHW → BWHDC" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#333333;strokeWidth=3;fontSize=12;align=center;verticalAlign=middle;fontColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="1620" y="300" width="280" height="50" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="predictor" value="Predictor (if use_predicter=True)&#xa;Linear(64→128) + Softplus&#xa;Linear(128→18)&#xa;[B, 1600, 1600, 128, 64] → [B, 1600, 1600, 128, 18]" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#80D4FF;strokeColor=#0066CC;strokeWidth=2;fontSize=11;align=left;verticalAlign=top;spacingLeft=5;spacingTop=5;fontColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="1620" y="370" width="280" height="90" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="output" value="Occupancy Prediction&#xa;[B, 1600, 1600, 128, 18]&#xa;18 classes:&#xa;0-10: Objects (car, pedestrian, etc.)&#xa;11-16: Surfaces (road, sidewalk, etc.)&#xa;17: Free space" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFB3FF;strokeColor=#CC00CC;strokeWidth=3;fontSize=12;align=left;verticalAlign=top;spacingLeft=10;spacingTop=5;fontColor=#000000;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="1620" y="480" width="280" height="110" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="loss" value="Loss L_occ&#xa;CrossEntropyLoss&#xa;Input: logits [B×1600×1600×128, 18]&#xa;Target: labels [B×1600×1600×128]&#xa;Optional: mask_camera" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FF8080;strokeColor=#CC0000;strokeWidth=3;fontSize=12;align=left;verticalAlign=top;spacingLeft=10;spacingTop=5;fontColor=#FFFFFF;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="1980" y="400" width="280" height="100" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="fusion-note" value="⚠️ 重要说明：&#xa;3D Fused Features 目前只是简单拼接，&#xa;没有学习型的 L+C 融合机制。&#xa;可以考虑引入跨模态注意力等改进。" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFF99;strokeColor=#FFCC00;strokeWidth=3;fontSize=12;align=left;verticalAlign=top;spacingLeft=10;spacingTop=5;fontStyle=1;fontColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="100" y="400" width="450" height="90" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="edge1" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=3;strokeColor=#FFFFFF;" edge="1" parent="1" source="img-feat" target="concat-op">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="edge2" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=3;strokeColor=#FFFFFF;" edge="1" parent="1" source="lidar-feat" target="concat-op">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="edge3" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=3;strokeColor=#FFFFFF;" edge="1" parent="1" source="concat-op" target="fusion-feat">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="edge4" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=3;strokeColor=#FFFFFF;" edge="1" parent="1" source="fusion-feat" target="encoder-backbone">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="edge5" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=3;strokeColor=#FFFFFF;" edge="1" parent="1" source="stage0" target="stage1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="edge6" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=3;strokeColor=#FFFFFF;" edge="1" parent="1" source="stage1" target="stage2">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="edge7" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=3;strokeColor=#FFFFFF;" edge="1" parent="1" source="stage2" target="encoder-neck">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="edge8" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=3;strokeColor=#FFFFFF;" edge="1" parent="1" source="fpn-ops" target="encoded-feat">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="edge9" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=3;strokeColor=#FFFFFF;" edge="1" parent="1" source="encoded-feat" target="final-conv">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="edge10" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=3;strokeColor=#FFFFFF;" edge="1" parent="1" source="final-conv" target="permute-op">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="edge11" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=3;strokeColor=#FFFFFF;" edge="1" parent="1" source="permute-op" target="predictor">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="edge12" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=3;strokeColor=#FFFFFF;" edge="1" parent="1" source="predictor" target="output">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="edge13" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=3;strokeColor=#FFFFFF;dashed=1;" edge="1" parent="1" source="output" target="loss">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

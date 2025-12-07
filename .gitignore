@@ -1,0 +1,73 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# PyTorch
+*.pth
+*.pt
+*.ckpt
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# Environment
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Data and checkpoints
+data/
+ckpt/
+work_dirs/
+*.pkl
+*.pickle
+
+# Logs
+*.log
+logs/
+tensorboard/
+
+# Model outputs
+outputs/
+results/
+
+# Temporary files
+*.tmp
+*.temp
+.cache/
+
+# MMDetection3D specific
+mmdet3d.egg-info/
+.mim/
+

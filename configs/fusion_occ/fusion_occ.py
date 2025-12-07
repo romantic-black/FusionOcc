@@ -290,4 +290,4 @@ custom_hooks = [
     ),
 ]
 
-# load_from = "../../ckpt/fusion_occ_mask.pth"
+load_from = "ckpt/fusion_occ_mask.pth"
