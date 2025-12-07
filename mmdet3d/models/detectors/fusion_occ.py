@@ -72,6 +72,7 @@ class FusionOCC(FusionDepthSeg):
                  loss_occ=None,
                  out_dim=32,
                  use_mask=False,
+                 use_lidar=True,
                  num_classes=18,
                  use_predicter=True,
                  class_wise=False,
@@ -88,6 +89,7 @@ class FusionOCC(FusionDepthSeg):
             img_bev_encoder_neck=occ_encoder_neck,
             **kwargs)
         self.voxel_size = voxel_size
+        self.use_lidar = use_lidar
         self.lidar_out_channel = lidar_out_channel
         self.lidar_in_channel = lidar_in_channel
         self.sparse_shape = [
@@ -96,15 +98,20 @@ class FusionOCC(FusionDepthSeg):
             int((point_cloud_range[5] - point_cloud_range[2]) / voxel_size[2])
         ]
         self.point_cloud_range = point_cloud_range
-        self.lidar_encoder = CustomSparseEncoder(
-            in_channels=self.lidar_in_channel,
-            sparse_shape=self.sparse_shape,
-            point_cloud_range=self.point_cloud_range,
-            voxel_size=self.voxel_size,
-            output_channels=self.lidar_out_channel,
-            # block_type="basicblock"
-            block_type="conv_module"
-        )
+        if not self.use_lidar:
+            assert self.lidar_out_channel == 0, \
+                'Disable LiDAR branch requires lidar_out_channel=0 for channel alignment.'
+            self.lidar_encoder = None
+        else:
+            self.lidar_encoder = CustomSparseEncoder(
+                in_channels=self.lidar_in_channel,
+                sparse_shape=self.sparse_shape,
+                point_cloud_range=self.point_cloud_range,
+                voxel_size=self.voxel_size,
+                output_channels=self.lidar_out_channel,
+                # block_type="basicblock"
+                block_type="conv_module"
+            )
         self.out_dim = out_dim
         out_channels = out_dim if use_predicter else num_classes
         self.final_conv = ConvModule(
@@ -147,12 +154,15 @@ class FusionOCC(FusionDepthSeg):
                       segs=None,
                       sparse_depth=None,
                       **kwargs):
-        lidar_feat, x_list, x_sparse_out = self.lidar_encoder(points)
-        lidar_feat = lidar_feat.permute(0, 1, 2, 4, 3).contiguous()
-
         input_depth = sparse_depth
         img_3d_feat_feat, depth_key_frame, seg_key_frame = self.extract_img_3d_feat(
             img_inputs=img_inputs, input_depth=input_depth)
+        if self.use_lidar:
+            lidar_feat, x_list, x_sparse_out = self.lidar_encoder(points)
+            lidar_feat = lidar_feat.permute(0, 1, 2, 4, 3).contiguous()
+        else:
+            B, _, D, H, W = img_3d_feat_feat.shape
+            lidar_feat = img_3d_feat_feat.new_zeros((B, 0, D, H, W))
         fusion_feat = torch.cat([img_3d_feat_feat, lidar_feat], dim=1)
         fusion_feat = self.occ_encoder(fusion_feat)
 
@@ -200,12 +210,16 @@ class FusionOCC(FusionDepthSeg):
         """Test function without augmentaiton."""
 
         sparse_depth = sparse_depth[0]
-        lidar_feat, x_list, x_sparse_out = self.lidar_encoder(points)
-        # N, C, D, H, W -> N,C,D,W,H
-        lidar_feat = lidar_feat.permute(0, 1, 2, 4, 3).contiguous()
         input_depth = sparse_depth
         img_3d_feat_feat, depth_key_frame, seg_key_frame = self.extract_img_3d_feat(
             img_inputs=img_inputs, input_depth=input_depth)
+        if self.use_lidar:
+            lidar_feat, x_list, x_sparse_out = self.lidar_encoder(points)
+            # N, C, D, H, W -> N,C,D,W,H
+            lidar_feat = lidar_feat.permute(0, 1, 2, 4, 3).contiguous()
+        else:
+            B, _, D, H, W = img_3d_feat_feat.shape
+            lidar_feat = img_3d_feat_feat.new_zeros((B, 0, D, H, W))
         fusion_feat = torch.cat([img_3d_feat_feat, lidar_feat], dim=1)
         fusion_feat = self.occ_encoder(fusion_feat)
 
